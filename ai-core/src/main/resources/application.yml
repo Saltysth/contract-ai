@@ -1,0 +1,104 @@
+server:
+  port: 13000
+  servlet:
+    context-path: /contract-ai
+
+
+spring:
+  application:
+    name: contract-ai-service
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:18848}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        service: contract-ai-service
+        namespace: ${NACOS_NAMESPACE:public}
+        group: ${NACOS_GROUP:CONTRACT_REVIEW}
+        enabled: true
+        heart-beat:
+          enabled: true
+          interval: 5000
+          timeout: 15000
+        metadata:
+          management:
+            context-path: /actuator
+          health:
+            check-url: http://${spring.cloud.client.ip-address}:${server.port}/actuator/health
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 300000
+        readTimeout: 300000
+        loggerLevel: basic
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+    cors:
+      allowed-origins: "*"
+      allowed-methods: GET,POST
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    defaults:
+      enabled: true
+    diskspace:
+      enabled: true
+      threshold: 100MB
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+logging:
+  level:
+    com.contract.ai: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+    com.alibaba.nacos: INFO
+
+# AI策略配置
+ai:
+  strategy:
+    glm:
+      enabled: true
+      enabled-models: ${GLM_VISION_MODELS:glm-4.1v-thinking-flash,GLM-4V-Plus-0111,glm-4.5v}
+      api-key: ${GLM_API_KEY:your-glm-api-key-here}
+
+    # 心流平台策略配置
+    iflow:
+      enabled: true
+      # iFlow API密钥 - 请替换为实际的API密钥
+      api-key: ${IFLOW_API_KEY:your-iflow-api-key-here}
+      base-url: ${IFLOW_BASE_URL:https://apis.iflow.cn}
+      enabled-models: ${IFLOW_ENABLED_MODELS:GLM-4.6}
+      connect-timeout: ${IFLOW_CONNECT_TIMEOUT:300000}
+      read-timeout: ${IFLOW_READ_TIMEOUT:300000}
+      # 心流平台特殊配置：并发限制为1
+      max-concurrent-requests: 1
+      # 重试配置
+      retry-attempts: 3
+      retry-delay: 1000
+
+    # DeepSeek平台策略配置
+    deepseek:
+      enabled: true
+      api-key: ${DEEPSEEK_API_KEY:your-deepseek-api-key-here}
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      enabled-models: ${DEEPSEEK_ENABLED_MODELS:deepseek-chat,deepseek-reasoner}
+      connect-timeout: ${DEEPSEEK_CONNECT_TIMEOUT:300000}
+      read-timeout: ${DEEPSEEK_READ_TIMEOUT:300000}
+      # DeepSeek平台支持更高的并发
+      max-concurrent-requests: 5
+      # 重试配置
+      retry-attempts: 3
+      retry-delay: 1000
